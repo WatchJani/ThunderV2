@@ -32,12 +32,12 @@ func SerializeFromStruct(obj interface{}) ([]byte, error) {
 
 		switch value.Kind() {
 		case reflect.Int:
-			if err := binary.Write(&buf, binary.LittleEndian, int16(value.Int())); err != nil {
+			if err := binary.Write(&buf, binary.LittleEndian, int64(value.Int())); err != nil {
 				return nil, err
 			}
 		case reflect.String:
 			str := value.String()
-			if err := binary.Write(&buf, binary.LittleEndian, int32(len(str))); err != nil {
+			if err := binary.Write(&buf, binary.LittleEndian, int16(len(str))); err != nil {
 				return nil, err
 			}
 			buf.WriteString(str)
@@ -60,14 +60,14 @@ func DeserializeFromSchema(data []byte, schema []SchemaElement) ([]string, error
 	for _, element := range schema {
 		switch element.Type {
 		case TypeInt:
-			var value int16
+			var value int64
 			if err := binary.Read(buf, binary.LittleEndian, &value); err != nil {
 				return nil, err
 			}
 			result = append(result, fmt.Sprintf("%d", value))
 
 		case TypeString:
-			var length int32
+			var length int16
 			if err := binary.Read(buf, binary.LittleEndian, &length); err != nil {
 				return nil, err
 			}
@@ -84,6 +84,53 @@ func DeserializeFromSchema(data []byte, schema []SchemaElement) ([]string, error
 				return nil, err
 			}
 			result = append(result, fmt.Sprintf("%f", value))
+
+		default:
+			return nil, fmt.Errorf("unsupported field type: %d", element.Type)
+		}
+	}
+
+	return result, nil
+}
+
+func DeserializeFromSchemaBinary(data []byte, schema []SchemaElement) ([][]byte, error) {
+	var (
+		result [][]byte
+		offset uint16
+	)
+
+	for _, element := range schema {
+		switch element.Type {
+		case TypeInt:
+			fmt.Println("int")
+			if offset+8 > uint16(len(data)) {
+				return nil, fmt.Errorf("not enough data for int")
+			}
+			result = append(result, data[offset:offset+8])
+			offset += 8
+
+		case TypeString:
+			fmt.Println("string")
+			if offset+2 > uint16(len(data)) {
+				return nil, fmt.Errorf("not enough data for string length")
+			}
+			length := binary.LittleEndian.Uint16(data[offset : offset+2])
+			fullStringSize := 2 + length
+
+			if offset+fullStringSize > uint16(len(data)) {
+				return nil, fmt.Errorf("not enough data for string content")
+			}
+
+			result = append(result, data[offset:offset+fullStringSize])
+			offset += fullStringSize
+
+		case TypeDouble:
+			fmt.Println("double")
+			if offset+8 > uint16(len(data)) {
+				return nil, fmt.Errorf("not enough data for double")
+			}
+			result = append(result, data[offset:offset+8])
+			offset += 8
 
 		default:
 			return nil, fmt.Errorf("unsupported field type: %d", element.Type)

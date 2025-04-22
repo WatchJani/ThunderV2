@@ -15,9 +15,9 @@ func main() {
 	record := Record{ID: 12345, Name: "John", Value: 99.99}
 
 	schema := []convertor.SchemaElement{
-		{Name: "ID", Type: convertor.TypeInt},
-		{Name: "Name", Type: convertor.TypeString},
-		{Name: "Value", Type: convertor.TypeDouble},
+		{Name: "ID", Type: convertor.TypeInt},       //64 bite
+		{Name: "Name", Type: convertor.TypeString},  // offset (16 bite) + content
+		{Name: "Value", Type: convertor.TypeDouble}, // 64 bite
 	}
 
 	serializedData, err := convertor.SerializeFromStruct(record)
@@ -25,6 +25,8 @@ func main() {
 		fmt.Println("Error serializing:", err)
 		return
 	}
+
+	fmt.Println(serializedData)
 
 	deserializedValues, err := convertor.DeserializeFromSchema(serializedData, schema)
 	if err != nil {
@@ -34,6 +36,17 @@ func main() {
 
 	fmt.Println("Deserialized Values:")
 	for _, value := range deserializedValues {
+		fmt.Println(value)
+	}
+
+	deserializedValuesBinary, err := convertor.DeserializeFromSchemaBinary(serializedData, schema)
+	if err != nil {
+		fmt.Println("Error deserializing:", err)
+		return
+	}
+
+	fmt.Println("Deserialized byte Values:")
+	for _, value := range deserializedValuesBinary {
 		fmt.Println(value)
 	}
 
