@@ -1,39 +1,58 @@
 package main
 
 import (
-	"log"
-	parquet "root/Parquet"
+	"fmt"
+	"root/convertor"
 )
 
 type Record struct {
-	ID    int64
+	ID    int
 	Name  string
 	Value float64
 }
 
 func main() {
-	schema := []*parquet.SchemaElement{
-		{Name: "id", Type: 1},
-		{Name: "name", Type: 2},
-		{Name: "value", Type: 3},
+	record := Record{ID: 12345, Name: "John", Value: 99.99}
+
+	schema := []convertor.SchemaElement{
+		{Name: "ID", Type: convertor.TypeInt},
+		{Name: "Name", Type: convertor.TypeString},
+		{Name: "Value", Type: convertor.TypeDouble},
 	}
 
-	writer, err := parquet.NewParquetWriter("example.parquet", schema)
+	serializedData, err := convertor.SerializeFromStruct(record)
 	if err != nil {
-		panic(err)
+		fmt.Println("Error serializing:", err)
+		return
 	}
 
-	records := []Record{
-		{ID: 1, Name: "Alice", Value: 12.5},
-		{ID: 2, Name: "Bob", Value: 23.7},
-		{ID: 3, Name: "Charlie", Value: 34.9},
+	deserializedValues, err := convertor.DeserializeFromSchema(serializedData, schema)
+	if err != nil {
+		fmt.Println("Error deserializing:", err)
+		return
 	}
 
-	if err := writer.WriteRowGroup(records); err != nil {
-		log.Println(err)
+	fmt.Println("Deserialized Values:")
+	for _, value := range deserializedValues {
+		fmt.Println(value)
 	}
 
-	if err := writer.Close(); err != nil {
-		log.Println(err)
-	}
+	// schema := []*parquet.SchemaElement{
+	// 	{Name: "id", Type: 1},
+	// 	{Name: "name", Type: 2},
+	// 	{Name: "value", Type: 3},
+	// }
+
+	// writer, err := parquet.NewParquetWriter("example.parquet", schema)
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	// if err := writer.WriteRowGroup(records); err != nil {
+	// 	log.Println(err)
+	// }
+
+	// if err := writer.Close(); err != nil {
+	// 	log.Println(err)
+	// }
 }

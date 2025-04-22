@@ -84,4 +84,5 @@ func (w *ParquetWriter) Close() error {
 }
 
 func serializeFooter(footer *FileFooter) []byte {
+	return []byte("")
 }
