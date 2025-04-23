@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"root/convertor"
+	"root/src/convertor"
 )
 
 type Record struct {

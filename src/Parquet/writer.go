@@ -50,7 +50,6 @@ func (w *ParquetWriter) WriteRowGroup(data interface{}) error {
 }
 
 func (w *ParquetWriter) Close() error {
-	// Napiši footer
 	footer := &FileFooter{
 		RowGroups: make([]*RowGroupMeta, len(w.rowGroups)),
 		Version:   1,
